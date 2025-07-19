@@ -132,3 +132,9 @@ wget https://assets.nagios.com/downloads/ncpa/check_ncpa.tar.gz
 tar -xzf check_ncpa.tar.gz
 
 echo "[✔] Nagios Core + Plugins + NCPA plugin setup complete!"
+
+
+
+
+
+
