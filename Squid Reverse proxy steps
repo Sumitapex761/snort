@@ -1,0 +1,106 @@
+Squid Reverse Proxy Lab Setup (2 Machines)
+
+Lab Goal:
+
+Set up a Squid Reverse Proxy server that forwards HTTP requests to an internal Apache web server.
+
+
+deb1   squid     192.168.<your host>  Squid Proxy Server   squid
+deb2   apache    192.168.<your host>   Apache Web Server   apache2
+
+
+Step-by-Step Configuration
+
+🔧 On Machine 2: Apache Web Server (192.168.80.132)
+
+1. Install Apache:  
+
+sudo apt update -y
+sudo apt install apache2 -y
+
+2. Start and Enable Apache:
+
+sudo systemctl start apache2
+sudo systemctl enable apache2
+
+3. (Optional) Customize Web Page:
+
+echo "<h1>Hello from Apache @ 192.168.</h1>" | sudo tee /var/www/html/index.html
+
+
+🔧 On Machine 1: Squid Proxy Server (192.168.<machine 1st host IP >)
+1. Install Squid:
+
+sudo apt update -y
+sudo apt install squid -y
+
+
+2. Open Squid Configuration:
+
+sudo nano /etc/squid/squid.conf
+
+🔍 Step 2: Comment Default Port
+🔑 Search Key: http_port
+Press: Ctrl + W → type: http_port → Enter
+
+# http_port 3128
+4. Add Squid Reverse Proxy Port:
+http_port 3128 accel vhost defaultsite=<APACHE_SERVER_IP>
+
+5. Search: cache_peer → Then Add:
+cache_peer <APACHE_SERVER_IP> parent 80 0 no-query originserver name=myserver
+
+6. Search: localnet → Then Add Below:
+acl my_site_acl dst <APACHE_SERVER_IP>
+
+7. Search: http_access deny all → Then Add Above or Below:
+
+http_access allow my_site_acl
+
+
+8. Search: cache_peer_access → Then Add:
+
+cache_peer_access myserver allow my_site_acl
+cache_peer_access myserver deny all
+
+
+9. Save and Exit:
+
+Press Ctrl+X, then Y, then Enter
+
+10. Restart Squid:
+
+sudo systemctl restart squid
+
+🔍 Testing the Setup
+
+From a client machine (e.g., rootCA or your base system):
+Expected Output:
+<h1>Hello from Apache @ 192.168.80.132</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
