@@ -6,7 +6,7 @@ wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-8.13.4-a
 sudo dpkg -i elasticsearch-8.13.4-amd64.deb
 
 #Edit in inthe  
-sudo nano /etc/elasticsearch/elasticsearch.yml
+#sudo nano /etc/elasticsearch/elasticsearch.yml
 
 #cluster.name: my-application
 #node.name: node-1
@@ -37,22 +37,26 @@ wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add
 
 echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-8.x.list
 
+sudo apt update 
+sudo apt install logstash -y
 
+sudo systemctl enable logstash
+sudo systemctl start logstash
 
 
 
 wget https://artifacts.elastic.co/downloads/kibana/kibana-8.13.4-amd64.deb
 sudo dpkg -i kibana-8.13.4-amd64.deb
+sudo systemctl enable --now kibana
+#sudo nano /etc/kibana/kibana.yml
 
-sudo nano /etc/kibana/kibana.yml
-
-
+#Uncomment aLL 
 #server.port: 5601
 #server.host: "0.0.0.0"
 #elasticsearch.hosts: ["http://localhost:9200"]
 
 
-sudo systemctl enable --now kibana
+
 sudo systemctl restart  logstash
 sudo systemctl restart  elasticsearch
 sudo systemctl restart kibana
