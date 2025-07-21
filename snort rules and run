@@ -1,3 +1,30 @@
+sudo nano /etc/snort/snort.conf
+
+var RULE_PATH /etc/snort/rules
+var SO_RULE_PATH /etc/snort/so_rules
+var PREPROC_RULE_PATH /etc/snort/preproc_rules
+
+
+✅ Include only this rule file:
+include $RULE_PATH/local.rules
+
+❌ Comment out all other includes:
+# include $RULE_PATH/app-detect.rules
+# include $RULE_PATH/backdoor.rules
+# ...
+
+
+✅ Fix reputation section:
+
+
+preprocessor reputation: \
+  memcap 500, \
+  priority whitelist, \
+  nested_ip inner, \
+  whitelist /etc/snort/rules/white_list.rules, \
+  blacklist /etc/snort/rules/black_list.rules
+
+✍️ STEP 2: Add Custom ICMP Rule (Ping Detection)
 sudo nano /etc/snort/rules/local.rules
 
 alert icmp any any -> any any (msg:"ICMP Ping Detected"; sid:1000001; rev:1;)
