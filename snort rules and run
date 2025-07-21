@@ -1,0 +1,6 @@
+sudo nano /etc/snort/rules/local.rules
+
+alert icmp any any -> any any (msg:"ICMP Ping Detected"; sid:1000001; rev:1;)
+
+RUN :- 
+sudo snort -i ens36 -u snort -g snort -c /etc/snort/snort.conf -A console -K ascii
