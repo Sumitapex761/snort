@@ -1,3 +1,4 @@
+#sudo nano /etc/squid/squid.conf
 acl my_site_acl dst <squid_ip>
 http_access allow my_site_acl
 http_port 80 accel  vhost
