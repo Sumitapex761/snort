@@ -1,0 +1,13 @@
+sudo iptables -L -n -v
+sudo iptables -P INPUT DROP
+sudo iptables -P FORWARD DROP
+sudo iptables -P OUTPUT ACCEPT
+  🟢 Allow SSH (port 22)  
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+  🟢 Allow HTTP (port 80)
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+
+
+REdirectinng 
+
+sudo iptables -t nat -A PREROUTING  -p tcp --dport 8080 -j REDIRECT --to-port 80
