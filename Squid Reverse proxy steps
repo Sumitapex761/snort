@@ -1,5 +1,5 @@
 #sudo nano /etc/squid/squid.conf
-acl my_site_acl dst <squid_ip>
+acl my_site_acl dst <squid_ip> # abey yaha squid wale machine ki ip hogi
 http_access allow my_site_acl
 http_port 80 accel  vhost
 cache_peer <apach_1_ip parent 80 0 no-query originserver round-robin weight=1
