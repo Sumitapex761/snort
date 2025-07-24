@@ -21,7 +21,7 @@ define service {
     use                     generic-service
     host_name               deb-12-1
     service_description     Virtual Memory Usage
-    check_command           check_ncpa!-t 'password1234' -P 5693 -M memory/virtual -w 50 -c 80
+    check_command           check_ncpa!-t 'i' -P 5693 -M memory/virtual -w 50 -c 80
 }
 
 define service {
@@ -78,7 +78,7 @@ define service {
 define command {
 
     command_name    check_ncpa
-    command_line    $USER1$/check_ncpa.py -H $HOSTNAME$ $ARG1$
+    command_line    $USER1$/check_ncpa.py -H $HOSTADDRESS$ $ARG1$
 }
 
 
