@@ -97,5 +97,6 @@ yaha bs python3 kr dena starting me hoga
 
 
 
+7. /usr/local/nagios/libexec$ sudo ./check_ncpa.py  -t 'i' -H 192.168.80.131 -M memory/virtual
 
 
