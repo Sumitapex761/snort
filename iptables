@@ -2,6 +2,10 @@ sudo iptables -L -n -v
 sudo iptables -P INPUT DROP
 sudo iptables -P FORWARD DROP
 sudo iptables -P OUTPUT ACCEPT
+
+🚫 Block a Specific IP (Example)
+sudo iptables -A INPUT -s 203.0.113.5 -j DROP
+
   🟢 Allow SSH (port 22)  
 sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
   🟢 Allow HTTP (port 80)
@@ -11,3 +15,32 @@ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
 REdirectinng 
 
 sudo iptables -t nat -A PREROUTING  -p tcp --dport 8080 -j REDIRECT --to-port 80
+
+
+
+✅ Scenario: Allow Only a Specific IP to SSH (port 22)
+Let’s say you want to allow only IP 192.168.1.100 to connect via SSH.
+
+
+# 1. First, flush old SSH rules (optional, for clean setup)
+sudo iptables -D INPUT -p tcp --dport 22 -j ACCEPT
+
+# 2. Allow SSH from a specific IP only
+sudo iptables -A INPUT -p tcp -s 192.168.1.100 --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A OUTPUT -p tcp --sport 22 -d 192.168.1.100 -m state --state ESTABLISHED -j ACCEPT
+
+# 3. (Optional) Block all other SSH attempts from unknown IPs
+sudo iptables -A INPUT -p tcp --dport 22 -j DROP
+
+
+💾 Save the rules (very important)
+
+sudo apt install iptables-persistent
+sudo netfilter-persistent save
+
+
+🔍 To verify rule is active:
+sudo iptables -L -v
+
+
+
