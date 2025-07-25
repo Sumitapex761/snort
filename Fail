@@ -1,0 +1,50 @@
+Fail2ban Practical Setup Steps take 2 machine 
+🔹 Step 1: Install Fail2ban
+
+		-sudo apt update
+		-sudo apt install fail2ban -y
+		
+🔹 Step 2: Start and Enable the Service
+
+		-sudo systemctl start fail2ban
+		-sudo systemctl enable fail2ban
+		
+🔹 Step 3: Create Local Jail Configuration
+	We don’t modify the original jail.conf, instead create a custom one:
+
+		-sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+		
+	-Now open the jail.local file for editing:
+	
+		-sudo nano /etc/fail2ban/jail.local
+
+	-Inside, configure this section 👇 (search sshd protection):
+	
+		[sshd]
+		enabled = true
+		port = ssh
+		backend = systemd
+		maxretry = 3
+		bantime = 600
+		findtime = 300
+		
+🔹 Step 4: Restart Fail2ban and check Status 
+
+	-sudo systemctl restart fail2ban
+	-sudo systemctl status fail2ban
+	
+Step 5: Check Fail2ban Status for SSH
+
+	-sudo fail2ban-client status sshd
+	
+		-You’ll see something like:
+		
+			Status for the jail: sshd
+			|- Filter
+			|  |- Currently failed: 0
+			|  |- Total failed: 2
+			|  `- File list: /var/log/auth.log
+			`- Actions
+			   |- Currently banned: 0
+			   |- Total banned: 1
+			   `- Banned IP list: 192.168.0.55
