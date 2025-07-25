@@ -1,0 +1,242 @@
+Lab Title:
+	Nagios Monitoring Lab using Kali, Debian, and Windows Machines
+	
+Lab Objective:
+	The main objective of this lab is to set up a Nagios monitoring system on a Kali Linux machine (as the Nagios server), 
+	and use it to monitor the health and services of both:
+
+		-a Linux client (Debian)
+
+		-and a Windows client (Windows 10/11)
+
+This setup demonstrates how Nagios can centrally monitor multiple machines — both Linux and Windows — on a network.
+
+System Setup:
+
+| Role		          | Operating System | Description                                                             |
+| ------------------  | ---------------- | ----------------------------------------------------------------------- |
+|	Nagios Server	  | Kali Linux       | The main monitoring server (where Nagios is installed and configured)   |
+| 	Linux Client	  | Debian           | A Linux machine that will be monitored using Nagios plugins (like NRPE) |
+| 	Windows Client	  | Windows 10       | A Windows machine that will be monitored using (NSClient++)             |
+
+
+Key Components:
+
+	-Nagios Core – Installed on Kali to monitor services and systems.
+
+	-NRPE (Nagios Remote Plugin Executor) – Installed on Debian to allow Nagios to check remote metrics (CPU, disk, RAM, etc.)
+
+	-NSClient++ – Installed on Windows to allow Nagios to monitor system services, processes, CPU usage, etc.
+
+	-Apache Web Server – To access the Nagios web dashboard via a browser.
+
+	-CGI Module – Required for Nagios web interface to work properly.
+	
+
+#Step 1: Install Nagios Core on Kali Linux (192.168.0.104)
+		
+	 A. Install Required Packages
+	 
+		-sudo apt update
+		-sudo apt install -y apache2 php libapache2-mod-php build-essential libgd-dev unzip wget
+		-sudo apt install nagios-plugins nagios-nrpe-plugin -y
+
+
+	B. Create a nagios User and Group
+	
+		-sudo useradd nagios
+		-sudo groupadd nagcmd
+		-sudo usermod -a -G nagcmd nagios
+		-sudo usermod -a -G nagcmd www-data
+	
+	C. Download and Compile Nagios Core
+	
+		-cd /tmp
+		-wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.5.1.tar.gz
+		-tar -xzf nagios-4.5.1.tar.gz
+		-cd nagios-4.5.1
+		-./configure --with-command-group=nagcmd
+		-make all
+		-sudo make install
+		-sudo make install-commandmode
+		-sudo make install-init
+		-sudo make install-config
+		-sudo make install-webconf
+		
+	D. Set Nagios Web UI Password
+	
+		-sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users aditya
+		
+	E. Enable and Start Apache + Nagios
+	
+		-sudo a2enmod cgi
+		-sudo systemctl restart apache2
+		-sudo systemctl enable apache2
+
+		-sudo systemctl start nagios
+		-sudo systemctl enable nagios
+		
+	F. Allow UFW Port (Optional)
+	
+		-sudo ufw allow Apache
+		-sudo ufw reload
+
+	G. Access Nagios Web Interface
+	
+		-http://192.168.0.104/nagios
+		
+		-Login with:
+
+			-Username: aditya
+			-Password: (whatever you set above)
+			
+			
+
+#Step 2: Installing and Configuring NRPE on Debian Client
+
+	A. Install NRPE and Nagios Plugins
+		On Debian client, run:
+		
+			-sudo apt update
+			-sudo apt install nagios-nrpe-server nagios-plugins -y
+	
+	B. Configure nrpe.cfg to Allow Nagios Server
+		Edit NRPE config file:
+		
+			-sudo nano /etc/nagios/nrpe.cfg
+			
+			Modify the line:
+				-allowed_hosts=127.0.0.1 TO allowed_hosts=127.0.0.1,192.168.0.104 (the Ip of Nagios Server)
+				
+	C. Restart NRPE Service
+	
+		-sudo systemctl restart nagios-nrpe-server
+		-sudo systemctl enable nagios-nrpe-server
+		
+	D. Verify NRPE from Nagios Server (Kali)
+	
+		-Install check_nrpe on Kali:
+		
+			-sudo apt install nagios-nrpe-plugin -y
+			
+		-Find the plugin location:
+		
+			-sudo find / -name check_nrpe
+			
+		-Create a symlink to standard Nagios path:
+		
+			-sudo mkdir -p /usr/local/nagios/libexec
+			-sudo ln -s /usr/lib/nagios/plugins/check_nrpe /usr/local/nagios/libexec/check_nrpe
+			
+		-Run the test:
+		
+			-/usr/local/nagios/libexec/check_nrpe -H 192.168.0.105
+		
+		-Expected Output:
+
+			-NRPE v4.x.x
+
+
+#Step 3: Configure Nagios to Monitor Debian Client (192.168.0.105)
+
+	A. Create a New Host Configuration File
+		On the Nagios Server (Kali):
+		
+			-sudo mkdir -p /usr/local/nagios/etc/servers
+			-sudo nano /usr/local/nagios/etc/servers/debian.cfg
+		
+	B. Add Host and Services to debian.cfg
+		Paste the following:
+
+			define host {
+			use                     linux-server
+			host_name               debian-client
+			alias                   Debian Bookworm Client
+			address                 192.168.0.105
+			max_check_attempts      5
+			check_period            24x7
+			notification_interval   30
+			notification_period     24x7
+			}
+
+			define service {
+				use                     generic-service
+				host_name               debian-client
+				service_description     PING
+				check_command           check_ping!100.0,20%!500.0,60%
+			}
+
+			define service {
+				use                     generic-service
+				host_name               debian-client
+				service_description     Check Root Disk
+				check_command           check_nrpe!check_disk
+			}
+
+			define service {
+				use                     generic-service
+				host_name               debian-client
+				service_description     Check Load
+				check_command           check_nrpe!check_load
+			}
+			
+	C. Include This Config in nagios.cfg
+		Edit the main config file:
+			
+			-sudo nano /usr/local/nagios/etc/nagios.cfg
+			
+				-Scroll to the bottom and ensure this line exists (only once):	
+				
+					-cfg_dir=/usr/local/nagios/etc/servers
+					
+	D. Fix Common Error: check_nrpe Not Defined
+		If you get this error during verification:
+		
+			-Error: Service check command 'check_nrpe!check_load' not defined
+			
+			👉 Then open the commands config file:
+			
+				-sudo nano /usr/local/nagios/etc/objects/commands.cfg
+				
+				And add this block at the end:
+				
+					define command {
+						command_name    check_nrpe
+						command_line    $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
+					}
+
+	E. Fix Web UI Permission Error (User: aditya)
+		Edit the CGI config file:
+		
+			-sudo nano /usr/local/nagios/etc/cgi.cfg
+			
+				Update these lines to grant access to the user aditya:
+				
+					authorized_for_system_information=aditya
+					authorized_for_configuration_information=aditya
+					authorized_for_system_commands=aditya
+					authorized_for_all_services=aditya
+					authorized_for_all_hosts=aditya
+					authorized_for_all_service_commands=aditya
+					authorized_for_all_host_commands=aditya
+					
+					(💡 If user is different, replace aditya with your web user)
+					
+	F. Verify Nagios Configuration
+		Run:
+		
+			-sudo /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+			
+		Expected Output:
+			Total Warnings: 0
+			Total Errors:   0
+			
+	G. Restart Nagios
+			-sudo systemctl restart nagios
+			
+	H. Access Nagios Web UI
+	
+		Navigate to:
+
+			Hosts → debian-client
+			Services → Check PING, Load, and Disk services
