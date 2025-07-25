@@ -1,0 +1,25 @@
+ sudo apt install openvpn -y
+sudo nano  server.conf
+proto     udp
+port      1194
+dev       tun
+auth      none
+cipher    none
+ifconfig  10.8.0.1 10.8.0.2
+verb      3
+
+
+
+run :- sudo openvpn --config server.conf
+
+
+
+in windows machine take a notepad  run it as a administartor  make  :- server.conf 
+
+proto udp
+dev   tun
+port 1194
+auth none
+cipher none
+ifconfig 10.8.0.2 10.8.0.1
+verb    3
